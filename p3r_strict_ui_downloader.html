@@ -557,28 +557,103 @@
                 }, 400);
             }
         }
-        // --- ระบบควบคุมเพลงพื้นหลัง (BGM System) ---
+        // ==========================================
+        // 1. ระบบจัดการเสียงเพลง (Background Music)
+        // ==========================================
         const bgm = document.getElementById('bgm-audio');
-        const volSlider = document.getElementById('volume-slider');
-
-        // 1. ตั้งค่าระดับเสียงเริ่มต้นตามแถบเลื่อน (value="0.3" หรือ 30%)
-        bgm.volume = volSlider.value;
-
-        // 2. ดักจับเมื่อมีการเลื่อนแถบเสียง เพื่อปรับความดังแบบ Real-time
-        volSlider.addEventListener('input', (event) => {
-            bgm.volume = event.target.value;
-        });
-
-        // 3. ปลดล็อกการเล่นเพลงเมื่อผู้ใช้คลิกหน้าเว็บครั้งแรก (Browser Policy)
-        document.body.addEventListener('click', () => {
-            if (bgm.paused) {
-                bgm.play().catch(err => console.log("รอผู้ใช้โต้ตอบก่อนเล่นเสียง: ", err));
+        
+        // ฟังก์ชันบังคับเล่นเพลงเมื่อผู้ใช้โต้ตอบกับหน้าเว็บครั้งแรก
+        function startMusic() {
+            if (bgm && bgm.paused) {
+                // ตั้งระดับเสียงเริ่มต้น (เช่น 0.3 คือ 30%)
+                bgm.volume = 0.3;
+                bgm.play().catch(e => console.log("รอการคลิกจากผู้ใช้เพื่อเล่นเพลง..."));
             }
-        }, { once: true }); // ทำงานแค่ครั้งเดียว
+        }
+
+        // ดักจับการคลิกทุกที่บนหน้าจอ เพื่อปลดล็อกเสียง
+        document.body.addEventListener('click', startMusic, { once: true });
+
+
+        // ==========================================
+        // 2. ฟังก์ชันจัดการการดาวน์โหลด (ดาวน์โหลดตรงลงเครื่อง)
+        // ==========================================
+        async function startDownload() {
+            // ปลดล็อกเพลงเผื่อผู้ใช้เพิ่งคลิกครั้งแรกที่ปุ่มนี้
+            startMusic(); 
+
+            const urlInput = document.getElementById('url-input').value.trim();
+            const formatSelect = document.getElementById('format-select').value;
+            const resSelect = document.getElementById('res-select').value;
+            const downloadUI = document.getElementById('download-ui');
+            const loadingText = document.getElementById('loading-text');
+
+            if (!urlInput) {
+                showError("SYSTEM ERROR: PLEASE PROVIDE TARGET URL");
+                return;
+            }
+
+            // แสดงหน้าต่างโหลดข้อมูล
+            downloadUI.classList.remove('hidden');
+            setTimeout(() => { downloadUI.style.width = '100vw'; }, 10);
+            loadingText.innerText = "EXTRACTING DATA...";
+
+            try {
+                // [แก้ปัญหา Failed to Fetch]
+                // หากคุณรันบนเครื่องตัวเอง (Local) ให้ใช้ http://127.0.0.1:8000/api/download
+                // หากคุณอัปขึ้น Render แล้ว ให้เปลี่ยนเป็น /api/download เฉยๆ
+                const apiUrl = `http://api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (response.ok && data.download_url) {
+                    loadingText.innerText = "DOWNLOADING TO DEVICE...";
+
+                    // [แก้ปัญหาโหลดลงเครื่องโดยตรงด้วย Blob]
+                    try {
+                        const fileResponse = await fetch(data.download_url);
+                        const blob = await fileResponse.blob();
+                        const blobUrl = window.URL.createObjectURL(blob);
+
+                        // สร้างปุ่มจำลองเพื่อสั่งเซฟไฟล์
+                        const a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = data.title + (formatSelect === 'mp3' ? '.mp3' : '.mp4');
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(blobUrl); // คืนพื้นที่หน่วยความจำ
+                    } catch (blobError) {
+                        // แผนสำรอง: หากติดปัญหาความปลอดภัย (CORS) ของเซิร์ฟเวอร์วิดีโอ ให้เปิดลิงก์ตรง
+                        console.warn("ไม่สามารถดึง Blob ได้ กำลังใช้แผนสำรอง...", blobError);
+                        window.open(data.download_url, '_blank');
+                    }
+
+                    loadingText.innerText = "DOWNLOAD COMPLETE";
+                    setTimeout(() => {
+                        downloadUI.style.width = '0vw';
+                        setTimeout(() => { downloadUI.classList.add('hidden'); }, 300);
+                    }, 2000);
+
+                } else {
+                    throw new Error(data.detail || "ไม่สามารถดึงข้อมูลได้");
+                }
+
+            } catch (error) {
+                downloadUI.style.width = '0vw';
+                setTimeout(() => {
+                    downloadUI.classList.add('hidden');
+                    // แสดง Error ในกล่องเพื่อให้เรารู้ว่าผิดที่ไหน
+                    showError("ERROR: FAILED TO FETCH. CHECK YOUR BACKEND SERVER.");
+                    console.error(error);
+                }, 300);
+            }
+        }
     </script>
     <!-- ระบบเสียงพื้นหลัง (Background Music) -->
     <audio id="bgm-audio" loop>
-        <source src="bgm.mp3" type="audio/mpeg">
+        <source src="Color Your Night.mp3" type="audio/mpeg">
     </audio>
 
     <!-- แผงควบคุมระดับเสียง สไตล์ P3R -->
