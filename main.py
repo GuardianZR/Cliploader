@@ -45,21 +45,24 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
             else:
                 format_query = f'bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/best[height<={resolution}][ext=mp4]/best'
 
-        # กำหนดพาธของไฟล์คุกกี้
+        # กำหนดที่อยู่ไฟล์คุกกี้
         cookie_path = os.path.join(BASE_DIR, "cookies.txt")
 
-        # ตั้งค่าตัวเลือกสำหรับ yt-dlp
+        # ท่าไม้ตายใหม่: ปลอมตัวเป็น Android และข้ามการเช็ก Web Player
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
-            # เพิ่มการตั้งค่าเพื่อหลอกระบบว่าเป็นแอปบนอุปกรณ์พกพาหรือทีวี
             'extractor_args': {
-                'youtube': ['client=android,ios,tv']
+                # หลอก YouTube ว่าเราดึงข้อมูลผ่านแอปมือถือ Android ไม่ใช่คอมพิวเตอร์
+                'youtube': ['player_client=android', 'player_skip=web']
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             }
         }
 
-        # ตรวจสอบว่าอัปโหลดไฟล์คุกกี้มาแล้วหรือไม่ ถ้ามีให้ใช้งานด้วย
+        # ถ้ามีไฟล์ cookies.txt ในโฟลเดอร์ ให้ดึงมาใช้ด้วย
         if os.path.exists(cookie_path):
             ydl_opts['cookiefile'] = cookie_path
 

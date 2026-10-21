@@ -294,6 +294,7 @@
 
             if (!urlInput) {
                 playDing('click');
+                errorMsg.innerText = '/// ERROR: PLEASE ENTER A VALID URL ///';
                 errorMsg.style.display = 'block';
                 setTimeout(() => errorMsg.style.display = 'none', 3000);
                 return;
@@ -304,26 +305,23 @@
             loadingText.style.color = "#030a14";
 
             try {
-                // เรียกผ่าน Relative Path อย่างปลอดภัย
                 const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
                 if (response.ok && data.download_url) {
-                    loadingText.innerText = "OPENING LINK...";
+                    loadingText.innerText = "OPENING NEW WINDOW...";
                     
-                    const a = document.createElement('a');
-                    a.href = data.download_url;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
+                    // ==========================================
+                    // โค้ดใหม่: สั่งเด้งหน้าต่าง Popup ตามที่คุณต้องการ
+                    // ==========================================
+                    // _blank คือคำสั่งให้เปิดแท็บใหม่หรือหน้าต่างใหม่
+                    window.open(data.download_url, '_blank', 'noopener,noreferrer');
 
                     setTimeout(() => playDing('hover'), 500);
                     setTimeout(() => playDing('click'), 700);
 
-                    loadingText.innerText = "DOWNLOAD COMPLETE";
+                    loadingText.innerText = "EXTRACTION COMPLETE";
                     loadingText.style.color = "white";
 
                     setTimeout(() => {
@@ -338,7 +336,7 @@
                 setTimeout(() => {
                     errorMsg.innerText = `/// ERROR: ${error.message.toUpperCase()} ///`;
                     errorMsg.style.display = 'block';
-                    setTimeout(() => errorMsg.style.display = 'none', 4000);
+                    setTimeout(() => errorMsg.style.display = 'none', 5000);
                 }, 400);
             }
         }
