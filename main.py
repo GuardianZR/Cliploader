@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 1. ส่งหน้าเว็บ (index.html)
 @app.get("/")
 async def serve_frontend():
-    html_path = os.path.join(BASE_DIR, "index.html")
+    html_path = os.path.join(BASE_DIR, "p3r_strict_ui_downloader.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
     return {"error": "index.html not found"}
