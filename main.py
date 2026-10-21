@@ -49,23 +49,39 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
                 format_query = f'best[height<={resolution}][ext=mp4]/best[height<={resolution}]/best'
 
         # กำหนดที่อยู่ไฟล์คุกกี้
+        # กำหนดที่อยู่ไฟล์คุกกี้
         cookie_path = os.path.join(BASE_DIR, "cookies.txt")
 
-        # --- 2. ตั้งค่าหลบหลีกบอท (Bypass) เหมือนเดิม ---
+        # ปรับ Format Query ให้ปลอดภัยสำหรับเซิร์ฟเวอร์ที่ไม่มีระบบรวมไฟล์ภาพ+เสียง (ffmpeg)
+        if format.lower() == "mp3":
+            format_query = 'bestaudio/best'
+        else:
+            # ดึงไฟล์วิดีโอเดี่ยวที่มีทั้งภาพและเสียงรวมกันแล้ว (Pre-merged) ที่ดีที่สุดตามความละเอียด
+            if resolution == "original":
+                format_query = 'best[ext=mp4]/best'
+            else:
+                format_query = f'best[height<={resolution}][ext=mp4]/best[ext=mp4]/best'
+
+        # --- ท่าไม้ตายใหม่: สั่งให้สลับปลอมตัวเป็น TV, Android, iOS อัตโนมัติ ---
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
             'extractor_args': {
-                'youtube': ['player_client=android', 'player_skip=web']
+                # ให้ yt-dlp ลองเจาะผ่าน Client หลายๆ แบบตามลำดับ
+                'youtube': ['player_client=tv,ios,android,web']
             },
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept-Language': 'th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7',
             }
         }
 
+        # ตรวจสอบและใช้งานไฟล์ Cookies
         if os.path.exists(cookie_path):
             ydl_opts['cookiefile'] = cookie_path
+        else:
+            print("WARNING: COOKIE FILE NOT FOUND AT", cookie_path) # พิมพ์แจ้งเตือนใน Log ของ Render
 
         # --- 3. ดึงข้อมูลและค้นหาลิงก์ตรงที่เล่นได้จริง ---
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
