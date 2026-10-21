@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P3R Downloader - Ultimate Animated Background</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Oswald for that condensed, bold P3R look -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --cyan: #00e5ff;
+            --dark-bg: #030a14;
+            --panel-bg: #091221;
+            --input-bg: #151e32;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Oswald', sans-serif;
+            background-color: var(--dark-bg);
+            color: white;
+            overflow: hidden;
+            user-select: none; 
+        }
+
+        /* =========================================
+           DYNAMIC BACKGROUND SETTINGS
+           ========================================= */
+
+        /* 1. Bright Blue Water Effect (Gradient Animation) */
+        .bg-water {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -10;
+            background: linear-gradient(135deg, #001133 0%, #0044aa 50%, #00d5ff 100%);
+            background-size: 200% 200%;
+            animation: waterFlow 8s ease infinite alternate;
+        }
+
+        @keyframes waterFlow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        /* 2. Moving Diagonal Lines */
+        .bg-lines {
+            position: fixed;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            z-index: -9;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 15px,
+                rgba(0, 0, 0, 0.15) 15px,
+                rgba(0, 0, 0, 0.15) 30px
+            );
+            animation: panLines 20s linear infinite;
+        }
+
+        @keyframes panLines {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-150px, 150px); }
+        }
+
+        /* 3. Diagonal White Cut (The sharp division) */
+        .bg-cut {
+            position: fixed;
+            top: 35%;
+            left: -20%;
+            width: 150%;
+            height: 250px;
+            z-index: -8;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 80%, transparent);
+            transform: rotate(-15deg);
+            border-top: 4px solid rgba(255, 255, 255, 0.7);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.4);
+            animation: pulseCut 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseCut {
+            0% { opacity: 0.8; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+            100% { opacity: 1; box-shadow: 0 0 60px rgba(0, 229, 255, 0.8); }
+        }
+
+        /* 4. Floating Red Petals */
+        #petal-container {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -7;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .petal {
+            position: absolute;
+            background: linear-gradient(135deg, #ff0044, #ff4477);
+            border-radius: 0 50% 0 50%; /* Sharp petal shape */
+            box-shadow: 0 0 10px rgba(255,0,50,0.6);
+            opacity: 0.9;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translate(0, 0) rotate(0deg) rotateX(0deg); opacity: 0;}
+            10% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(60vw, 110vh) rotate(720deg) rotateX(360deg); opacity: 0; }
+        }
+
+
+        /* =========================================
+           UI ELEMENTS (EXACT MATCH TO YOUR IMAGE)
+           ========================================= */
+
+        /* Master Rotation Group */
+        .master-transform {
+            transform: rotate(-3deg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Typography */
+        .header-group {
+            position: relative;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 2rem;
+            margin-left: -2rem; 
+        }
+
+        .text-hollow {
+            position: absolute;
+            top: -1.2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8rem;
+            font-weight: 900;
+            font-style: italic;
+            color: transparent;
+            -webkit-text-stroke: 2px rgba(0, 229, 255, 0.6);
+            white-space: nowrap;
+            letter-spacing: -2px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .text-solid {
+            position: relative;
+            font-size: 5rem;
+            font-weight: 900;
+            font-style: italic;
+            color: white;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
+            z-index: 1;
+            letter-spacing: 1px;
+        }
+
+        .system-badge {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            padding: 2px 10px;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            transform: rotate(3deg);
+        }
+
+        /* Main Card */
+        .p3-card {
+            background-color: var(--panel-bg);
+            border-left: 6px solid var(--cyan);
+            border-bottom: 6px solid var(--cyan);
+            /* Massive white shadow just like the image */
+            box-shadow: 25px 25px 0px white;
+            padding: 2rem 3rem;
+            width: 700px;
+            max-width: 90vw;
+            transform: skewX(-12deg);
+        }
+
+        .unskew {
+            transform: skewX(12deg);
+        }
+
+        /* Form Elements */
+        .input-label {
+            font-size: 1.25rem;
+            font-weight: 900;
+            font-style: italic;
+            color: white;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .dark-input {
+            background-color: var(--input-bg);
+            color: white;
+            padding: 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            width: 100%;
+            outline: none;
+            border: none;
+            transition: background-color 0.1s;
+        }
+
+        .dark-input:hover, .dark-input:focus { background-color: #1a253d; }
+        .dark-input::placeholder { color: rgba(255, 255, 255, 0.3); font-style: italic; }
+
+        .p3-row { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .p3-row-half { flex: 1; }
+
+        .p3-label-box {
+            background-color: var(--input-bg);
+            color: white;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 1.25rem;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .p3-select-box {
+            background-color: var(--cyan);
+            color: black;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 1.25rem;
+            padding: 1rem;
+            width: 100%;
+            appearance: none;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            transition: filter 0.1s;
+        }
+        
+        .p3-select-box:hover { filter: brightness(1.1); }
+        .select-wrapper { position: relative; flex: 1; }
+        .select-arrow { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: black; font-size: 1rem; pointer-events: none; }
+
+        /* Submit Button */
+        .p3-submit {
+            background-color: var(--cyan);
+            color: black;
+            font-weight: 900;
+            font-style: italic;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            width: 100%;
+            padding: 1rem;
+            margin-top: 2.5rem;
+            border: none;
+            cursor: pointer;
+            box-shadow: 10px 10px 0px white;
+            transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+        }
+
+        .p3-submit:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 14px 14px 0px white;
+            filter: brightness(1.1);
+        }
+
+        .p3-submit:active {
+            transform: translate(2px, 2px);
+            box-shadow: 8px 8px 0px white;
+        }
+
+        /* Loading Overlay */
+        .sweep-overlay {
+            position: fixed;
+            top: 0; left: -10%; width: 120%; height: 100vh;
+            background-color: var(--cyan);
+            z-index: 100;
+            transform: translateX(-100%) skewX(-12deg);
+            transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sweep-overlay.active { transform: translateX(0) skewX(-12deg); }
+        
+        #error-msg { display: none; color: #ff3366; font-weight: bold; font-style: italic; margin-top: 1rem; text-shadow: 2px 2px 0px black; }
+
+        #audioPrompt {
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            font-size: 0.8rem; background: rgba(0,0,0,0.8); padding: 5px 15px;
+            border-radius: 20px; color: rgba(255,255,255,0.5); z-index: 50;
+            pointer-events: none; transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. The Dynamic Background Layers -->
+    <div class="bg-water"></div>
+    <div class="bg-lines"></div>
+    <div class="bg-cut"></div>
+    <div id="petal-container"></div>
+
+    <div id="audioPrompt">Click anywhere to enable P3R UI sounds</div>
+    <div class="system-badge">SYSTEM v3.0</div>
+
+    <!-- 2. The Main P3R Interface -->
+    <div class="w-full h-full flex items-center justify-center pt-10">
+        <div class="master-transform">
+            
+            <div class="header-group">
+                <div class="text-hollow">BY GUARDIANZ</div>
+                <div class="text-solid">Made by GuardianZ</div>
+            </div>
+
+            <div class="p3-card">
+                <div class="unskew">
+                    
+                    <div>
+                        <div class="input-label">NETWORK LINK</div>
+                        <input type="text" id="urlInput" class="dark-input interactive-el" placeholder="PASTE YOUTUBE / X / FACEBOOK URL...">
+                    </div>
+
+                    <div class="p3-row">
+                        <div class="p3-row-half"><div class="p3-label-box">FORMAT</div></div>
+                        <div class="select-wrapper">
+                            <select id="formatSelect" class="p3-select-box interactive-el" onchange="handleFormatChange()">
+                                <option value="mp4">FORMAT</option>
+                                <option value="mp4">VIDEO (MP4)</option>
+                                <option value="mp3">AUDIO (MP3)</option>
+                            </select>
+                            <div class="select-arrow">▼</div>
+                        </div>
+                    </div>
+
+                    <div class="p3-row" id="resRow">
+                        <div class="p3-row-half"><div class="p3-label-box">RESOLUTION</div></div>
+                        <div class="select-wrapper">
+                            <select id="resSelect" class="p3-select-box interactive-el">
+                                <option value="1080">RESOLUTION</option>
+                                <option value="original">ORIGINAL</option>
+                                <option value="1080">1080P FHD</option>
+                                <option value="720">720P HD</option>
+                            </select>
+                            <div class="select-arrow" id="resArrow">▼</div>
+                        </div>
+                    </div>
+
+                    <div id="error-msg">/// ERROR: PLEASE ENTER A VALID URL ///</div>
+
+                    <button class="p3-submit interactive-el" onclick="startDownload()">
+                        INITIALIZE DOWNLOAD
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Loading Sweep Overlay -->
+    <div id="sweepScreen" class="sweep-overlay">
+        <div style="transform: skewX(12deg); text-align: center;">
+            <h2 id="loadingText" class="text-6xl md:text-8xl font-black italic uppercase text-[#030a14]">
+                EXTRACTING DATA...
+            </h2>
+        </div>
+    </div>
+
+    <!-- 4. Logic & Sound Scripts -->
+    <script>
+        /* Generate Floating Red Petals */
+        function createPetals() {
+            const container = document.getElementById('petal-container');
+            const petalCount = 20;
+            
+            for (let i = 0; i < petalCount; i++) {
+                let petal = document.createElement('div');
+                petal.className = 'petal';
+                
+                // Randomize positions, delays, and sizes for organic feel
+                let startX = Math.random() * 100 - 20; // -20vw to 80vw
+                let startY = Math.random() * 100 - 50; // -50vh to 50vh
+                let duration = Math.random() * 8 + 8;  // 8s to 16s
+                let delay = Math.random() * -20;       // Start immediately at different points
+                let size = Math.random() * 15 + 10;    // 10px to 25px
+                
+                petal.style.left = startX + 'vw';
+                petal.style.top = startY + 'vh';
+                petal.style.width = size + 'px';
+                petal.style.height = size + 'px';
+                petal.style.animationDuration = duration + 's';
+                petal.style.animationDelay = delay + 's';
+                
+                container.appendChild(petal);
+            }
+        }
+        createPetals();
+
+        /* Web Audio API for UI Sounds */
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        let audioEnabled = false;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioContext();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if (!audioEnabled) {
+                audioEnabled = true;
+                document.getElementById('audioPrompt').style.opacity = '0';
+            }
+        }
+
+        document.body.addEventListener('click', initAudio, { once: true });
+        document.body.addEventListener('keydown', initAudio, { once: true });
+
+        function playDing(type) {
+            if (!audioCtx || !audioEnabled) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'hover') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1046.50, now); // C6
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'click') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, now); // A5
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.15); // Drop to A4
+                gainNode.gain.setValueAtTime(0.15, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        }
+
+        const interactives = document.querySelectorAll('.interactive-el');
+        interactives.forEach(el => {
+            el.addEventListener('mouseenter', () => playDing('hover'));
+            el.addEventListener('mousedown', () => playDing('click'));
+        });
+
+        /* Form Logic & API Calls */
+        function handleFormatChange() {
+            const format = document.getElementById('formatSelect').value;
+            const resSelect = document.getElementById('resSelect');
+            const resRow = document.getElementById('resRow');
+
+            if (format === 'mp3') {
+                resSelect.disabled = true;
+                resSelect.innerHTML = '<option value="locked">AUDIO ONLY</option>';
+                resRow.style.opacity = '0.5';
+            } else {
+                resSelect.disabled = false;
+                resSelect.innerHTML = `
+                    <option value="1080">RESOLUTION</option>
+                    <option value="original">ORIGINAL</option>
+                    <option value="1080">1080P FHD</option>
+                    <option value="720">720P HD</option>
+                `;
+                resRow.style.opacity = '1';
+            }
+        }
+
+        async function startDownload() {
+            initAudio();
+            const urlInput = document.getElementById('urlInput').value.trim();
+            let formatSelect = document.getElementById('formatSelect').value;
+            let resSelect = document.getElementById('resSelect').value;
+            const sweepScreen = document.getElementById('sweepScreen');
+            const loadingText = document.getElementById('loadingText');
+            const errorMsg = document.getElementById('error-msg');
+
+            if (formatSelect === 'FORMAT') formatSelect = 'mp4';
+            if (resSelect === 'RESOLUTION') resSelect = '1080';
+
+            if (!urlInput) {
+                playDing('click');
+                errorMsg.style.display = 'block';
+                setTimeout(() => errorMsg.style.display = 'none', 3000);
+                return;
+            }
+
+            sweepScreen.classList.add('active');
+            loadingText.innerText = "EXTRACTING DATA...";
+            loadingText.style.color = "#030a14";
+
+            try {
+                // เปลี่ยนจาก: const apiUrl = `http://127.0.0.1:8000/api/download?...`;
+                // เป็นแบบนี้ (ลบ http://127.0.0.1:8000 ออก):
+                const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (response.ok && data.download_url) {
+                    loadingText.innerText = "OPENING LINK...";
+                    
+                    const a = document.createElement('a');
+                    a.href = data.download_url;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    setTimeout(() => playDing('hover'), 500);
+                    setTimeout(() => playDing('click'), 700);
+
+                    loadingText.innerText = "DOWNLOAD COMPLETE";
+                    loadingText.style.color = "white";
+
+                    setTimeout(() => {
+                        sweepScreen.classList.remove('active');
+                        document.getElementById('urlInput').value = '';
+                    }, 2000);
+                } else {
+                    throw new Error(data.detail || "Failed to extract link");
+                }
+            } catch (error) {
+                sweepScreen.classList.remove('active');
+                setTimeout(() => {
+                    errorMsg.innerText = `/// ERROR: ${error.message.toUpperCase()} ///`;
+                    errorMsg.style.display = 'block';
+                    setTimeout(() => errorMsg.style.display = 'none', 4000);
+                }, 400);
+            }
+        }
+    </script>
+</body>
+</html>
