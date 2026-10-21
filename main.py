@@ -63,23 +63,31 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
                 print("Cobalt API Error, falling back to yt-dlp:", e)
                 # หาก API ล่ม โค้ดจะไหลลงไปใช้ yt-dlp ด้านล่างเป็นแผนสำรอง
 
-        # ==========================================
-        # 2. ระบบดั้งเดิม (yt-dlp) สำหรับ Facebook และอื่นๆ
+       # ==========================================
+        # 2. ระบบดั้งเดิม (yt-dlp) สำหรับ Facebook และอื่นๆ (รวมถึง YouTube สำรอง)
         # ==========================================
         if format.lower() == "mp3":
             format_query = 'bestaudio/best'
         else:
-            format_query = 'best[ext=mp4]/best'
+            format_query = 'best'
 
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
-            'extractor_args': {'youtube': ['player_client=android,ios,tv,web']},
+            # แก้ไขบรรทัดนี้: ลบคำว่า 'web' ออก เพื่อป้องกันไม่ให้ YouTube ส่ง JavaScript Challenge มา
+            'extractor_args': {
+                'youtube': ['player_client=android,ios'] 
+            },
+            # ปรับ User-Agent ให้เหมือนมือถือ Android จริงๆ เพื่อความแนบเนียน
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
             }
         }
+
+        cookie_path = os.path.join(BASE_DIR, "cookies.txt")
+        if os.path.exists(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
 
         cookie_path = os.path.join(BASE_DIR, "cookies.txt")
         if os.path.exists(cookie_path):
