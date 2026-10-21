@@ -45,10 +45,12 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
             else:
                 format_query = f'bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/best[height<={resolution}][ext=mp4]/best'
 
+        # อัปเดตการตั้งค่า ydl_opts ให้แนบไฟล์คุกกี้ไปด้วย
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
+            'cookiefile': os.path.join(BASE_DIR, "cookies.txt"), # เพิ่มบรรทัดนี้เข้ามา!
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
