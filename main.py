@@ -19,10 +19,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @app.get("/")
 async def serve_frontend():
-    html_path = os.path.join(BASE_DIR, "index.html")
+    html_path = os.path.join(BASE_DIR, "p3r_strict_ui_downloader.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"error": "index.html not found"}
+    return {"error": "p3r_strict_ui_downloader.html not found"}
 
 @app.get("/bgm.mp3")
 async def serve_bgm():
