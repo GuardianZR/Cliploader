@@ -14,7 +14,6 @@
     <style>
         :root {
             --cyan: #00e5ff;
-            --dark-bg: #030a14;
             --panel-bg: #091221;
             --input-bg: #151e32;
         }
@@ -25,21 +24,27 @@
             width: 100%;
             height: 100%;
             font-family: 'Oswald', sans-serif;
-            background-color: var(--dark-bg);
             color: white;
             overflow: hidden;
             user-select: none; 
+            background-color: #001133; /* Fallback base color */
         }
 
         /* =========================================
-           DYNAMIC BACKGROUND SETTINGS
+           LAYER 1: DYNAMIC BACKGROUND (FIXED VISIBILITY)
            ========================================= */
-
-        /* 1. Bright Blue Water Effect (Gradient Animation) */
-        .bg-water {
+        .bg-layer {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -10;
+            z-index: 1; /* Positive Z-index to ensure visibility */
+            pointer-events: none; /* Let clicks pass through to UI */
+            overflow: hidden;
+        }
+
+        /* Water Gradient */
+        .bg-water {
+            position: absolute;
+            inset: 0;
             background: linear-gradient(135deg, #001133 0%, #0044aa 50%, #00d5ff 100%);
             background-size: 200% 200%;
             animation: waterFlow 8s ease infinite alternate;
@@ -50,17 +55,16 @@
             100% { background-position: 100% 100%; }
         }
 
-        /* 2. Moving Diagonal Lines */
+        /* Diagonal Moving Lines */
         .bg-lines {
-            position: fixed;
+            position: absolute;
             top: -50%; left: -50%; width: 200%; height: 200%;
-            z-index: -9;
             background: repeating-linear-gradient(
                 45deg,
                 transparent,
                 transparent 15px,
-                rgba(0, 0, 0, 0.15) 15px,
-                rgba(0, 0, 0, 0.15) 30px
+                rgba(0, 0, 0, 0.25) 15px,
+                rgba(0, 0, 0, 0.25) 30px
             );
             animation: panLines 20s linear infinite;
         }
@@ -70,19 +74,18 @@
             100% { transform: translate(-150px, 150px); }
         }
 
-        /* 3. Diagonal White Cut (The sharp division) */
+        /* Diagonal White Cut */
         .bg-cut {
-            position: fixed;
+            position: absolute;
             top: 35%;
             left: -20%;
             width: 150%;
             height: 250px;
-            z-index: -8;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 80%, transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.05) 80%, transparent);
             transform: rotate(-15deg);
-            border-top: 4px solid rgba(255, 255, 255, 0.7);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 40px rgba(0, 229, 255, 0.4);
+            border-top: 4px solid rgba(255, 255, 255, 0.8);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 229, 255, 0.5);
             animation: pulseCut 4s infinite alternate ease-in-out;
         }
 
@@ -91,20 +94,17 @@
             100% { opacity: 1; box-shadow: 0 0 60px rgba(0, 229, 255, 0.8); }
         }
 
-        /* 4. Floating Red Petals */
+        /* Petal Container */
         #petal-container {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: -7;
-            pointer-events: none;
-            overflow: hidden;
+            position: absolute;
+            inset: 0;
         }
 
         .petal {
             position: absolute;
             background: linear-gradient(135deg, #ff0044, #ff4477);
             border-radius: 0 50% 0 50%; /* Sharp petal shape */
-            box-shadow: 0 0 10px rgba(255,0,50,0.6);
+            box-shadow: 0 0 10px rgba(255,0,50,0.8);
             opacity: 0.9;
             animation: fall linear infinite;
         }
@@ -116,10 +116,18 @@
             100% { transform: translate(60vw, 110vh) rotate(720deg) rotateX(360deg); opacity: 0; }
         }
 
-
         /* =========================================
-           UI ELEMENTS (EXACT MATCH TO YOUR IMAGE)
+           LAYER 2: UI ELEMENTS (TOP LAYER)
            ========================================= */
+        .ui-layer {
+            position: relative;
+            z-index: 10; /* Ensures UI is above the background */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
         /* Master Rotation Group */
         .master-transform {
@@ -127,6 +135,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            margin-top: 2rem;
         }
 
         /* Typography */
@@ -175,6 +184,7 @@
             font-size: 0.9rem;
             letter-spacing: 2px;
             transform: rotate(3deg);
+            z-index: 10;
         }
 
         /* Main Card */
@@ -307,17 +317,20 @@
 </head>
 <body>
 
-    <!-- 1. The Dynamic Background Layers -->
-    <div class="bg-water"></div>
-    <div class="bg-lines"></div>
-    <div class="bg-cut"></div>
-    <div id="petal-container"></div>
+    <!-- LAYER 1: DYNAMIC BACKGROUND -->
+    <div class="bg-layer">
+        <div class="bg-water"></div>
+        <div class="bg-lines"></div>
+        <div class="bg-cut"></div>
+        <div id="petal-container"></div>
+    </div>
 
+    <!-- AUDIO PROMPT & BADGE -->
     <div id="audioPrompt">Click anywhere to enable P3R UI sounds</div>
     <div class="system-badge">SYSTEM v3.0</div>
 
-    <!-- 2. The Main P3R Interface -->
-    <div class="w-full h-full flex items-center justify-center pt-10">
+    <!-- LAYER 2: THE MAIN P3R INTERFACE -->
+    <div class="ui-layer">
         <div class="master-transform">
             
             <div class="header-group">
@@ -369,7 +382,7 @@
         </div>
     </div>
 
-    <!-- 3. Loading Sweep Overlay -->
+    <!-- LAYER 3: SWEEP OVERLAY -->
     <div id="sweepScreen" class="sweep-overlay">
         <div style="transform: skewX(12deg); text-align: center;">
             <h2 id="loadingText" class="text-6xl md:text-8xl font-black italic uppercase text-[#030a14]">
@@ -378,23 +391,22 @@
         </div>
     </div>
 
-    <!-- 4. Logic & Sound Scripts -->
+    <!-- SCRIPTS -->
     <script>
         /* Generate Floating Red Petals */
         function createPetals() {
             const container = document.getElementById('petal-container');
-            const petalCount = 20;
+            const petalCount = 25;
             
             for (let i = 0; i < petalCount; i++) {
                 let petal = document.createElement('div');
                 petal.className = 'petal';
                 
-                // Randomize positions, delays, and sizes for organic feel
-                let startX = Math.random() * 100 - 20; // -20vw to 80vw
-                let startY = Math.random() * 100 - 50; // -50vh to 50vh
-                let duration = Math.random() * 8 + 8;  // 8s to 16s
-                let delay = Math.random() * -20;       // Start immediately at different points
-                let size = Math.random() * 15 + 10;    // 10px to 25px
+                let startX = Math.random() * 100 - 20; 
+                let startY = Math.random() * 100 - 50; 
+                let duration = Math.random() * 6 + 6;  
+                let delay = Math.random() * -20;       
+                let size = Math.random() * 15 + 10;    
                 
                 petal.style.left = startX + 'vw';
                 petal.style.top = startY + 'vh';
@@ -418,7 +430,8 @@
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!audioEnabled) {
                 audioEnabled = true;
-                document.getElementById('audioPrompt').style.opacity = '0';
+                const prompt = document.getElementById('audioPrompt');
+                if(prompt) prompt.style.opacity = '0';
             }
         }
 
@@ -503,9 +516,7 @@
             loadingText.style.color = "#030a14";
 
             try {
-                // เปลี่ยนจาก: const apiUrl = `http://127.0.0.1:8000/api/download?...`;
-                // เป็นแบบนี้ (ลบ http://127.0.0.1:8000 ออก):
-                const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
+                const apiUrl = `http://127.0.0.1:8000/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
