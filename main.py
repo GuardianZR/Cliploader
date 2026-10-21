@@ -45,13 +45,23 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
             else:
                 format_query = f'bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/best[height<={resolution}][ext=mp4]/best'
 
-        # อัปเดตการตั้งค่า ydl_opts ให้แนบไฟล์คุกกี้ไปด้วย
+        # กำหนดพาธของไฟล์คุกกี้
+        cookie_path = os.path.join(BASE_DIR, "cookies.txt")
+
+        # ตั้งค่าตัวเลือกสำหรับ yt-dlp
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
-            'cookiefile': os.path.join(BASE_DIR, "cookies.txt"), # เพิ่มบรรทัดนี้เข้ามา!
+            # เพิ่มการตั้งค่าเพื่อหลอกระบบว่าเป็นแอปบนอุปกรณ์พกพาหรือทีวี
+            'extractor_args': {
+                'youtube': ['client=android,ios,tv']
+            }
         }
+
+        # ตรวจสอบว่าอัปโหลดไฟล์คุกกี้มาแล้วหรือไม่ ถ้ามีให้ใช้งานด้วย
+        if os.path.exists(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
