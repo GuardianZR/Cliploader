@@ -37,24 +37,26 @@ async def serve_bgm():
 @app.get("/api/download")
 async def get_download_link(url: str, format: str = "mp4", resolution: str = "1080"):
     try:
+        # --- 1. ปรับความยืดหยุ่นของการค้นหาไฟล์ (Format Query) ---
         if format.lower() == "mp3":
             format_query = 'bestaudio/best'
         else:
             if resolution == "original":
-                format_query = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
+                # ขอไฟล์เดี่ยวที่มีทั้งภาพ+เสียง ที่เป็น mp4 ถ้าไม่มีให้เอาที่ดีที่สุดแทน
+                format_query = 'best[ext=mp4]/best'
             else:
-                format_query = f'bestvideo[height<={resolution}][ext=mp4]+bestaudio[ext=m4a]/best[height<={resolution}][ext=mp4]/best'
+                # ขอความละเอียดตามที่กำหนด ถ้าไม่เป๊ะก็เอาที่ดีที่สุดที่สอดคล้อง
+                format_query = f'best[height<={resolution}][ext=mp4]/best[height<={resolution}]/best'
 
         # กำหนดที่อยู่ไฟล์คุกกี้
         cookie_path = os.path.join(BASE_DIR, "cookies.txt")
 
-        # ท่าไม้ตายใหม่: ปลอมตัวเป็น Android และข้ามการเช็ก Web Player
+        # --- 2. ตั้งค่าหลบหลีกบอท (Bypass) เหมือนเดิม ---
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
             'extractor_args': {
-                # หลอก YouTube ว่าเราดึงข้อมูลผ่านแอปมือถือ Android ไม่ใช่คอมพิวเตอร์
                 'youtube': ['player_client=android', 'player_skip=web']
             },
             'http_headers': {
@@ -62,19 +64,29 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
             }
         }
 
-        # ถ้ามีไฟล์ cookies.txt ในโฟลเดอร์ ให้ดึงมาใช้ด้วย
         if os.path.exists(cookie_path):
             ydl_opts['cookiefile'] = cookie_path
 
+        # --- 3. ดึงข้อมูลและค้นหาลิงก์ตรงที่เล่นได้จริง ---
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             
             direct_url = info.get('url')
+            
+            # แผนสำรอง: หากไม่ได้ลิงก์ตรง ให้ค้นหาจากรายการ Format ทั้งหมด
             if not direct_url and 'formats' in info:
                 for f in reversed(info['formats']):
-                    if f.get('url'):
+                    # กรองเอาเฉพาะไฟล์ที่มีทั้งภาพ (vcodec) และเสียง (acodec) รวมอยู่ด้วยกัน
+                    if f.get('url') and f.get('acodec') != 'none' and f.get('vcodec') != 'none':
                         direct_url = f['url']
                         break
+                
+                # หากยังไม่เจออีก ให้เอาลิงก์แรกสุดที่ใช้งานได้
+                if not direct_url:
+                    for f in reversed(info['formats']):
+                        if f.get('url'):
+                            direct_url = f['url']
+                            break
 
             title = info.get('title', 'video_download')
             if not direct_url:
