@@ -22,7 +22,7 @@ async def serve_frontend():
     html_path = os.path.join(BASE_DIR, "p3r_strict_ui_downloader.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"error": "p3r_strict_ui_downloader.html not found"}
+    return {"error": "p3r_strict_ui_downloader.html"}
 
 @app.get("/bgm.mp3")
 async def serve_bgm():
@@ -34,37 +34,55 @@ async def serve_bgm():
 @app.get("/api/download")
 async def get_download_link(url: str, format: str = "mp4", resolution: str = "1080"):
     try:
-        # ==========================================
-        # 1. ระบบ Smart Routing สำหรับ YouTube
-        # ==========================================
         is_youtube = "youtube.com" in url.lower() or "youtu.be" in url.lower()
-        
+        direct_url = None
+        title = "p3r_downloaded_media"
+
+        # ==========================================
+        # 1. ระบบ 100% Reliable API Pool สำหรับ YouTube
+        # ==========================================
         if is_youtube:
-            # ใช้ Cobalt API ทะลวงบล็อก YouTube โดยไม่ต้องง้อ Cookies
-            api_url = "https://api.cobalt.tools/api/json"
+            # รายชื่อเซิร์ฟเวอร์ API สำรอง (ถ้าตัวแรกโดนบล็อก จะสลับไปตัวถัดไปทันที)
+            cobalt_apis = [
+                "https://api.cobalt.tools/api/json",
+                "https://co.wuk.sh/api/json",
+                "https://cobalt.q0.wtf/api/json",
+                "https://api.cobalt.bckdr.icu/api/json"
+            ]
+            
             headers = {
                 "Accept": "application/json",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
+            
+            # โครงสร้างข้อมูลที่อัปเดตใหม่ให้ตรงกับมาตรฐาน Cobalt V7/V8
             payload = {
                 "url": url,
-                "vQuality": resolution if format != "mp3" else "max",
+                "videoQuality": resolution if format != "mp3" else "max",
                 "isAudioOnly": True if format == "mp3" else False
             }
             
-            try:
-                response = requests.post(api_url, json=payload, headers=headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    direct_url = data.get("url") or data.get("picker", [{}])[0].get("url")
-                    if direct_url:
-                        return {"status": "success", "title": "youtube_media", "download_url": direct_url}
-            except Exception as e:
-                print("Cobalt API Error, falling back to yt-dlp:", e)
-                # หาก API ล่ม โค้ดจะไหลลงไปใช้ yt-dlp ด้านล่างเป็นแผนสำรอง
+            # วนลูปทดลองดึงข้อมูลจาก API ทีละตัว
+            for api_url in cobalt_apis:
+                try:
+                    response = requests.post(api_url, json=payload, headers=headers, timeout=10)
+                    if response.status_code == 200:
+                        data = response.json()
+                        direct_url = data.get("url") or data.get("picker", [{}])[0].get("url")
+                        if direct_url:
+                            print(f"ดึงข้อมูลสำเร็จผ่าน: {api_url}")
+                            break # หากสำเร็จ ให้ออกจากลูปทันที
+                except Exception as e:
+                    print(f"ข้าม API {api_url} เนื่องจาก: {e}")
+                    continue # หากล่ม ให้ไปลองเซิร์ฟเวอร์ตัวถัดไป
+            
+            if direct_url:
+                return {"status": "success", "title": "youtube_media", "download_url": direct_url}
+            # หาก API ทั้ง 4 ตัวล่มทั้งหมด (ซึ่งยากมาก) โค้ดจะไหลลงไปใช้ yt-dlp ด้านล่างเป็นแผนสุดท้าย
 
-       # ==========================================
-        # 2. ระบบดั้งเดิม (yt-dlp) สำหรับ Facebook และอื่นๆ (รวมถึง YouTube สำรอง)
+        # ==========================================
+        # 2. ระบบ yt-dlp ดั้งเดิม (สำหรับ Facebook และเป็นไม้ตายสุดท้าย)
         # ==========================================
         if format.lower() == "mp3":
             format_query = 'bestaudio/best'
@@ -75,19 +93,11 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
-            # แก้ไขบรรทัดนี้: ลบคำว่า 'web' ออก เพื่อป้องกันไม่ให้ YouTube ส่ง JavaScript Challenge มา
-            'extractor_args': {
-                'youtube': ['player_client=android,ios'] 
-            },
-            # ปรับ User-Agent ให้เหมือนมือถือ Android จริงๆ เพื่อความแนบเนียน
+            'extractor_args': {'youtube': ['player_client=android,ios']},
             'http_headers': {
                 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
             }
         }
-
-        cookie_path = os.path.join(BASE_DIR, "cookies.txt")
-        if os.path.exists(cookie_path):
-            ydl_opts['cookiefile'] = cookie_path
 
         cookie_path = os.path.join(BASE_DIR, "cookies.txt")
         if os.path.exists(cookie_path):
