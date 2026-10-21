@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-import requests
+import yt_dlp
 import os
 
 app = FastAPI()
 
+# ตั้งค่า CORS อนุญาตให้หน้าเว็บเรียกใช้งาน API ได้
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,15 +17,15 @@ app.add_middleware(
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# 1. ส่งหน้าเว็บ (index.html)
+# 1. เสิร์ฟหน้าเว็บหลัก
 @app.get("/")
 async def serve_frontend():
-    html_path = os.path.join(BASE_DIR, "p3r_strict_ui_downloader.html")
+    html_path = os.path.join(BASE_DIR, "index.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"error": "p3r_strict_ui_downloader.html not found"}
+    return {"error": "index.html not found"}
 
-# 2. ส่งไฟล์เพลง (bgm.mp3)
+# 2. เสิร์ฟไฟล์เพลงประกอบ
 @app.get("/bgm.mp3")
 async def serve_bgm():
     bgm_path = os.path.join(BASE_DIR, "bgm.mp3")
@@ -32,41 +33,56 @@ async def serve_bgm():
         return FileResponse(bgm_path)
     return {"error": "bgm.mp3 not found"}
 
-# 3. API สำหรับดาวน์โหลดโดยใช้ 3rd Party API ภายนอก
+# 3. API สกัดลิงก์วิดีโอ (ใช้ yt-dlp ดึงลิงก์ตรง)
 @app.get("/api/download")
 async def get_download_link(url: str, format: str = "mp4", resolution: str = "1080"):
     try:
-        # ตัวอย่างการใช้งาน Public API / หรือเปลี่ยนเป็น Endpoint ของผู้ให้บริการที่คุณเลือก
-        # (ตัวอย่างนี้จำลองโครงสร้างการส่ง Request ไปยัง Service ภายนอก)
-        api_url = "https://api.cobalt.tools/api/json" # ตัวอย่างการเรียกใช้ Cobalt API แบบสาธารณะ
-        
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "url": url,
-            "vQuality": resolution if format != "mp3" else "max",
-            "isAudioOnly": True if format == "mp3" else False
+        # เลือกรูปแบบไฟล์ที่ยืดหยุ่นที่สุดเพื่อรองรับทุกแพลตฟอร์ม
+        if format.lower() == "mp3":
+            format_query = 'bestaudio/best'
+        else:
+            format_query = 'best[ext=mp4]/best'
+
+        ydl_opts = {
+            'format': format_query,
+            'quiet': True,
+            'noplaylist': True,
+            'extractor_args': {
+                'youtube': ['player_client=android,ios,tv,web']
+            },
+            'http_headers': {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            }
         }
 
-        response = requests.post(api_url, json=payload, headers=headers)
-        
-        if response.status_code == 200:
-            data = response.json()
-            download_url = data.get("url") or data.get("picker", [{}])[0].get("url")
+        # อ่านไฟล์คุกกี้หากมีอยู่ในระบบ
+        cookie_path = os.path.join(BASE_DIR, "cookies.txt")
+        if os.path.exists(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
             
-            if not download_url:
-                raise Exception("ไม่สามารถดึงลิงก์ดาวน์โหลดจากระบบภายนอกได้")
-                
+            # ดึง URL ตรงจากวิดีโอ
+            direct_url = info.get('url')
+            
+            # หากไม่มี URL ตรง ให้ค้นหาจากรายการ formats ทั้งหมด
+            if not direct_url and 'formats' in info:
+                for f in reversed(info['formats']):
+                    if f.get('url'):
+                        direct_url = f['url']
+                        break
+
+            title = info.get('title', 'p3r_downloaded_media')
+            
+            if not direct_url:
+                raise Exception("ไม่สามารถดึงลิงก์วิดีโอจาก URL นี้ได้")
+
             return {
                 "status": "success", 
-                "title": "p3r_downloaded_media", 
-                "download_url": download_url
+                "title": title, 
+                "download_url": direct_url
             }
-        else:
-            raise Exception("3rd Party API ขัดข้องหรือปฏิเสธคำขอ")
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
