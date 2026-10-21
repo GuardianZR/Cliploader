@@ -520,7 +520,7 @@
             loadingText.style.color = "#030a14";
 
             try {
-                const apiUrl = `http://127.0.0.1:8000/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
+                const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
                 const response = await fetch(apiUrl);
                 const data = await response.json();
 
@@ -602,7 +602,7 @@
                 // [แก้ปัญหา Failed to Fetch]
                 // หากคุณรันบนเครื่องตัวเอง (Local) ให้ใช้ http://127.0.0.1:8000/api/download
                 // หากคุณอัปขึ้น Render แล้ว ให้เปลี่ยนเป็น /api/download เฉยๆ
-                const apiUrl = `http://api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
+                const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
                 
                 const response = await fetch(apiUrl);
                 const data = await response.json();

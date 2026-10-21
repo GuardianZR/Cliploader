@@ -1,7 +1,6 @@
-# main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse # เพิ่มบรรทัดนี้
+from fastapi.responses import FileResponse
 import yt_dlp
 import os
 
@@ -15,16 +14,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- 1. เพิ่ม Route สำหรับเสิร์ฟหน้าเว็บ UI ---
+# ประกาศที่อยู่ของโฟลเดอร์ปัจจุบัน
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 1. ส่งหน้าเว็บ (index.html)
 @app.get("/")
 async def serve_frontend():
-    # ตรวจสอบว่ามีไฟล์ index.html อยู่หรือไม่
-    html_path = os.path.join(os.path.dirname(__file__), "p3r_strict_ui_downloader.html")
+    html_path = os.path.join(BASE_DIR, "index.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
     return {"error": "index.html not found"}
 
-# --- 2. Route สำหรับ API ดาวน์โหลด (อันเดิมของคุณ) ---
+# 2. ส่งไฟล์เพลง (bgm.mp3) *นี่คือส่วนที่เพิ่มเข้ามาแก้ปัญหาเพลงไม่ดัง*
+@app.get("/bgm.mp3")
+async def serve_bgm():
+    bgm_path = os.path.join(BASE_DIR, "bgm.mp3")
+    if os.path.exists(bgm_path):
+        return FileResponse(bgm_path)
+    return {"error": "bgm.mp3 not found"}
+
+# 3. API สำหรับดาวน์โหลด
 @app.get("/api/download")
 async def get_download_link(url: str, format: str = "mp4", resolution: str = "1080"):
     try:
