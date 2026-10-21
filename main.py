@@ -1,10 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from urllib.parse import urlparse
 import yt_dlp
 import requests
 import os
 
+BLOCKED_DOMAINS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
+
+def check_url(url: str):
+    host = urlparse(url).netloc.lower()
+    if host in BLOCKED_DOMAINS:
+        return False, "ขออภัย ไม่รองรับการดาวน์โหลดจาก YouTube เนื่องจากข้อกำหนดของแพลตฟอร์ม"
+    return True, None
 app = FastAPI()
 
 app.add_middleware(
