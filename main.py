@@ -19,7 +19,7 @@ app.add_middleware(
 @app.get("/")
 async def serve_frontend():
     # ตรวจสอบว่ามีไฟล์ index.html อยู่หรือไม่
-    html_path = os.path.join(os.path.dirname(__file__), "index.html")
+    html_path = os.path.join(os.path.dirname(__file__), "p3r_strict_ui_downloader.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
     return {"error": "index.html not found"}
