@@ -7,15 +7,11 @@
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts: Oswald for that condensed, bold P3R look -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Oswald:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&display=swap" rel="stylesheet">
 
     <style>
-        /* สไตล์เงาของกล่องปรับเสียง */
-        .solid-shadow { 
-            box-shadow: 6px 6px 0px rgba(0, 229, 255, 0.8); 
-        }
+        .solid-shadow { box-shadow: 6px 6px 0px rgba(0, 229, 255, 0.8); }
         :root {
             --cyan: #00e5ff;
             --panel-bg: #091221;
@@ -23,305 +19,66 @@
         }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
+            margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Oswald', sans-serif;
-            color: white;
-            overflow: hidden;
-            user-select: none; 
-            background-color: #001133; /* Fallback base color */
+            color: white; overflow: hidden; user-select: none; 
+            background-color: #001133;
         }
 
-        /* =========================================
-           LAYER 1: DYNAMIC BACKGROUND (FIXED VISIBILITY)
-           ========================================= */
-        .bg-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 1; /* Positive Z-index to ensure visibility */
-            pointer-events: none; /* Let clicks pass through to UI */
-            overflow: hidden;
-        }
+        /* LAYER 1: BACKGROUND */
+        .bg-layer { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; pointer-events: none; overflow: hidden; }
+        .bg-water { position: absolute; inset: 0; background: linear-gradient(135deg, #001133 0%, #0044aa 50%, #00d5ff 100%); background-size: 200% 200%; animation: waterFlow 8s ease infinite alternate; }
+        @keyframes waterFlow { 0% { background-position: 0% 0%; } 100% { background-position: 100% 100%; } }
+        
+        .bg-lines { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: repeating-linear-gradient(45deg, transparent, transparent 15px, rgba(0, 0, 0, 0.25) 15px, rgba(0, 0, 0, 0.25) 30px); animation: panLines 20s linear infinite; }
+        @keyframes panLines { 0% { transform: translate(0, 0); } 100% { transform: translate(-150px, 150px); } }
 
-        /* Water Gradient */
-        .bg-water {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, #001133 0%, #0044aa 50%, #00d5ff 100%);
-            background-size: 200% 200%;
-            animation: waterFlow 8s ease infinite alternate;
-        }
+        .bg-cut { position: absolute; top: 35%; left: -20%; width: 150%; height: 250px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.05) 80%, transparent); transform: rotate(-15deg); border-top: 4px solid rgba(255, 255, 255, 0.8); border-bottom: 2px solid rgba(255, 255, 255, 0.4); box-shadow: 0 0 40px rgba(0, 229, 255, 0.5); animation: pulseCut 4s infinite alternate ease-in-out; }
+        @keyframes pulseCut { 0% { opacity: 0.8; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); } 100% { opacity: 1; box-shadow: 0 0 60px rgba(0, 229, 255, 0.8); } }
 
-        @keyframes waterFlow {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 100% 100%; }
-        }
+        #petal-container { position: absolute; inset: 0; }
+        .petal { position: absolute; background: linear-gradient(135deg, #ff0044, #ff4477); border-radius: 0 50% 0 50%; box-shadow: 0 0 10px rgba(255,0,50,0.8); opacity: 0.9; animation: fall linear infinite; }
+        @keyframes fall { 0% { transform: translate(0, 0) rotate(0deg) rotateX(0deg); opacity: 0;} 10% { opacity: 1; } 80% { opacity: 1; } 100% { transform: translate(60vw, 110vh) rotate(720deg) rotateX(360deg); opacity: 0; } }
 
-        /* Diagonal Moving Lines */
-        .bg-lines {
-            position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 15px,
-                rgba(0, 0, 0, 0.25) 15px,
-                rgba(0, 0, 0, 0.25) 30px
-            );
-            animation: panLines 20s linear infinite;
-        }
+        /* LAYER 2: UI */
+        .ui-layer { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .master-transform { transform: rotate(-3deg); display: flex; flex-direction: column; align-items: center; margin-top: 2rem; }
+        
+        .header-group { position: relative; width: 100%; text-align: center; margin-bottom: 2rem; margin-left: -2rem; }
+        .text-hollow { position: absolute; top: -1.2rem; left: 50%; transform: translateX(-50%); font-size: 8rem; font-weight: 900; font-style: italic; color: transparent; -webkit-text-stroke: 2px rgba(0, 229, 255, 0.6); white-space: nowrap; letter-spacing: -2px; z-index: 0; pointer-events: none; }
+        .text-solid { position: relative; font-size: 5rem; font-weight: 900; font-style: italic; color: white; text-shadow: 4px 4px 0px rgba(0,0,0,0.8); z-index: 1; letter-spacing: 1px; }
+        .system-badge { position: absolute; top: 2rem; right: 2rem; border: 1px solid var(--cyan); color: var(--cyan); padding: 2px 10px; font-size: 0.9rem; letter-spacing: 2px; transform: rotate(3deg); z-index: 10; }
 
-        @keyframes panLines {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(-150px, 150px); }
-        }
-
-        /* Diagonal White Cut */
-        .bg-cut {
-            position: absolute;
-            top: 35%;
-            left: -20%;
-            width: 150%;
-            height: 250px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1) 30%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.05) 80%, transparent);
-            transform: rotate(-15deg);
-            border-top: 4px solid rgba(255, 255, 255, 0.8);
-            border-bottom: 2px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 0 40px rgba(0, 229, 255, 0.5);
-            animation: pulseCut 4s infinite alternate ease-in-out;
-        }
-
-        @keyframes pulseCut {
-            0% { opacity: 0.8; box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
-            100% { opacity: 1; box-shadow: 0 0 60px rgba(0, 229, 255, 0.8); }
-        }
-
-        /* Petal Container */
-        #petal-container {
-            position: absolute;
-            inset: 0;
-        }
-
-        .petal {
-            position: absolute;
-            background: linear-gradient(135deg, #ff0044, #ff4477);
-            border-radius: 0 50% 0 50%; /* Sharp petal shape */
-            box-shadow: 0 0 10px rgba(255,0,50,0.8);
-            opacity: 0.9;
-            animation: fall linear infinite;
-        }
-
-        @keyframes fall {
-            0% { transform: translate(0, 0) rotate(0deg) rotateX(0deg); opacity: 0;}
-            10% { opacity: 1; }
-            80% { opacity: 1; }
-            100% { transform: translate(60vw, 110vh) rotate(720deg) rotateX(360deg); opacity: 0; }
-        }
-
-        /* =========================================
-           LAYER 2: UI ELEMENTS (TOP LAYER)
-           ========================================= */
-        .ui-layer {
-            position: relative;
-            z-index: 10; /* Ensures UI is above the background */
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Master Rotation Group */
-        .master-transform {
-            transform: rotate(-3deg);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 2rem;
-        }
-
-        /* Typography */
-        .header-group {
-            position: relative;
-            width: 100%;
-            text-align: center;
-            margin-bottom: 2rem;
-            margin-left: -2rem; 
-        }
-
-        .text-hollow {
-            position: absolute;
-            top: -1.2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 8rem;
-            font-weight: 900;
-            font-style: italic;
-            color: transparent;
-            -webkit-text-stroke: 2px rgba(0, 229, 255, 0.6);
-            white-space: nowrap;
-            letter-spacing: -2px;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .text-solid {
-            position: relative;
-            font-size: 5rem;
-            font-weight: 900;
-            font-style: italic;
-            color: white;
-            text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
-            z-index: 1;
-            letter-spacing: 1px;
-        }
-
-        .system-badge {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            border: 1px solid var(--cyan);
-            color: var(--cyan);
-            padding: 2px 10px;
-            font-size: 0.9rem;
-            letter-spacing: 2px;
-            transform: rotate(3deg);
-            z-index: 10;
-        }
-
-        /* Main Card */
-        .p3-card {
-            background-color: var(--panel-bg);
-            border-left: 6px solid var(--cyan);
-            border-bottom: 6px solid var(--cyan);
-            /* Massive white shadow just like the image */
-            box-shadow: 25px 25px 0px white;
-            padding: 2rem 3rem;
-            width: 700px;
-            max-width: 90vw;
-            transform: skewX(-12deg);
-        }
-
-        .unskew {
-            transform: skewX(12deg);
-        }
-
-        /* Form Elements */
-        .input-label {
-            font-size: 1.25rem;
-            font-weight: 900;
-            font-style: italic;
-            color: white;
-            margin-bottom: 0.25rem;
-            text-transform: uppercase;
-        }
-
-        .dark-input {
-            background-color: var(--input-bg);
-            color: white;
-            padding: 1rem;
-            font-size: 1.25rem;
-            font-weight: 700;
-            width: 100%;
-            outline: none;
-            border: none;
-            transition: background-color 0.1s;
-        }
-
+        .p3-card { background-color: var(--panel-bg); border-left: 6px solid var(--cyan); border-bottom: 6px solid var(--cyan); box-shadow: 25px 25px 0px white; padding: 2rem 3rem; width: 700px; max-width: 90vw; transform: skewX(-12deg); }
+        .unskew { transform: skewX(12deg); }
+        
+        .input-label { font-size: 1.25rem; font-weight: 900; font-style: italic; color: white; margin-bottom: 0.25rem; text-transform: uppercase; }
+        .dark-input { background-color: var(--input-bg); color: white; padding: 1rem; font-size: 1.25rem; font-weight: 700; width: 100%; outline: none; border: none; transition: background-color 0.1s; }
         .dark-input:hover, .dark-input:focus { background-color: #1a253d; }
         .dark-input::placeholder { color: rgba(255, 255, 255, 0.3); font-style: italic; }
 
         .p3-row { display: flex; gap: 1rem; margin-top: 1.5rem; }
         .p3-row-half { flex: 1; }
-
-        .p3-label-box {
-            background-color: var(--input-bg);
-            color: white;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.25rem;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-        }
-
-        .p3-select-box {
-            background-color: var(--cyan);
-            color: black;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 1.25rem;
-            padding: 1rem;
-            width: 100%;
-            appearance: none;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            transition: filter 0.1s;
-        }
-        
+        .p3-label-box { background-color: var(--input-bg); color: white; font-weight: 900; font-style: italic; font-size: 1.25rem; padding: 1rem; display: flex; align-items: center; }
+        .p3-select-box { background-color: var(--cyan); color: black; font-weight: 900; font-style: italic; font-size: 1.25rem; padding: 1rem; width: 100%; appearance: none; border: none; outline: none; cursor: pointer; transition: filter 0.1s; }
         .p3-select-box:hover { filter: brightness(1.1); }
         .select-wrapper { position: relative; flex: 1; }
         .select-arrow { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: black; font-size: 1rem; pointer-events: none; }
 
-        /* Submit Button */
-        .p3-submit {
-            background-color: var(--cyan);
-            color: black;
-            font-weight: 900;
-            font-style: italic;
-            font-size: 2.5rem;
-            text-transform: uppercase;
-            width: 100%;
-            padding: 1rem;
-            margin-top: 2.5rem;
-            border: none;
-            cursor: pointer;
-            box-shadow: 10px 10px 0px white;
-            transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
-        }
+        .p3-submit { background-color: var(--cyan); color: black; font-weight: 900; font-style: italic; font-size: 2.5rem; text-transform: uppercase; width: 100%; padding: 1rem; margin-top: 2.5rem; border: none; cursor: pointer; box-shadow: 10px 10px 0px white; transition: transform 0.1s, box-shadow 0.1s, filter 0.1s; }
+        .p3-submit:hover { transform: translate(-4px, -4px); box-shadow: 14px 14px 0px white; filter: brightness(1.1); }
+        .p3-submit:active { transform: translate(2px, 2px); box-shadow: 8px 8px 0px white; }
 
-        .p3-submit:hover {
-            transform: translate(-4px, -4px);
-            box-shadow: 14px 14px 0px white;
-            filter: brightness(1.1);
-        }
-
-        .p3-submit:active {
-            transform: translate(2px, 2px);
-            box-shadow: 8px 8px 0px white;
-        }
-
-        /* Loading Overlay */
-        .sweep-overlay {
-            position: fixed;
-            top: 0; left: -10%; width: 120%; height: 100vh;
-            background-color: var(--cyan);
-            z-index: 100;
-            transform: translateX(-100%) skewX(-12deg);
-            transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
+        .sweep-overlay { position: fixed; top: 0; left: -10%; width: 120%; height: 100vh; background-color: var(--cyan); z-index: 100; transform: translateX(-100%) skewX(-12deg); transition: transform 0.4s cubic-bezier(0.77, 0, 0.175, 1); display: flex; align-items: center; justify-content: center; }
         .sweep-overlay.active { transform: translateX(0) skewX(-12deg); }
         
         #error-msg { display: none; color: #ff3366; font-weight: bold; font-style: italic; margin-top: 1rem; text-shadow: 2px 2px 0px black; }
-
-        #audioPrompt {
-            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
-            font-size: 0.8rem; background: rgba(0,0,0,0.8); padding: 5px 15px;
-            border-radius: 20px; color: rgba(255,255,255,0.5); z-index: 50;
-            pointer-events: none; transition: opacity 0.5s;
-        }
+        #audioPrompt { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; background: rgba(0,0,0,0.8); padding: 5px 15px; border-radius: 20px; color: rgba(255,255,255,0.5); z-index: 50; pointer-events: none; transition: opacity 0.5s; }
     </style>
 </head>
 <body>
 
-    <!-- LAYER 1: DYNAMIC BACKGROUND -->
+    <!-- BACKGROUND -->
     <div class="bg-layer">
         <div class="bg-water"></div>
         <div class="bg-lines"></div>
@@ -329,14 +86,12 @@
         <div id="petal-container"></div>
     </div>
 
-    <!-- AUDIO PROMPT & BADGE -->
     <div id="audioPrompt">Click anywhere to enable P3R UI sounds</div>
     <div class="system-badge">SYSTEM v3.0</div>
 
-    <!-- LAYER 2: THE MAIN P3R INTERFACE -->
+    <!-- UI LAYER -->
     <div class="ui-layer">
         <div class="master-transform">
-            
             <div class="header-group">
                 <div class="text-hollow">BY GUARDIANZ</div>
                 <div class="text-solid">Made by GuardianZ</div>
@@ -344,7 +99,6 @@
 
             <div class="p3-card">
                 <div class="unskew">
-                    
                     <div>
                         <div class="input-label">NETWORK LINK</div>
                         <input type="text" id="urlInput" class="dark-input interactive-el" placeholder="PASTE YOUTUBE / X / FACEBOOK URL...">
@@ -380,13 +134,12 @@
                     <button class="p3-submit interactive-el" onclick="startDownload()">
                         INITIALIZE DOWNLOAD
                     </button>
-
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- LAYER 3: SWEEP OVERLAY -->
+    <!-- SWEEP OVERLAY -->
     <div id="sweepScreen" class="sweep-overlay">
         <div style="transform: skewX(12deg); text-align: center;">
             <h2 id="loadingText" class="text-6xl md:text-8xl font-black italic uppercase text-[#030a14]">
@@ -395,19 +148,35 @@
         </div>
     </div>
 
-    <!-- SCRIPTS -->
+    <!-- AUDIO PLAYER (ใช้ไฟล์ bgm.mp3 เพื่อให้ตรงกับ Backend) -->
+    <audio id="bgm-audio" loop>
+        <source src="/bgm.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- VOLUME CONTROL UI -->
+    <div class="fixed bottom-4 right-4 z-50 skew-card bg-[#010a14] border-l-4 border-cyan-400 p-3 solid-shadow opacity-80 hover:opacity-100 transition-opacity duration-200">
+        <div class="unskew flex items-center space-x-3">
+            <span class="text-cyan-400 text-xs font-mono font-bold tracking-widest uppercase">
+                ♪ COLOR YOUR NIGHT
+            </span>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.3" class="w-24 cursor-pointer accent-cyan-400">
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT -->
     <script>
-        /* Generate Floating Red Petals */
+        // 1. Petals Animation
         function createPetals() {
             const container = document.getElementById('petal-container');
             const petalCount = 25;
-            
             for (let i = 0; i < petalCount; i++) {
                 let petal = document.createElement('div');
                 petal.className = 'petal';
                 
-                let startX = Math.random() * 100 - 20; 
-                let startY = Math.random() * 100 - 50; 
+                // แก้ไข Syntax Error ตรงนี้แล้ว
+                let startX = Math.random() * 100; 
+                let startY = Math.random() * 100; 
+                
                 let duration = Math.random() * 6 + 6;  
                 let delay = Math.random() * -20;       
                 let size = Math.random() * 15 + 10;    
@@ -424,12 +193,29 @@
         }
         createPetals();
 
-        /* Web Audio API for UI Sounds */
+        // 2. Audio Control System
+        const bgm = document.getElementById('bgm-audio');
+        const volSlider = document.getElementById('volume-slider');
+
+        // ผูกแถบเลื่อนกับความดังเพลง
+        if(bgm && volSlider) {
+            bgm.volume = volSlider.value;
+            volSlider.addEventListener('input', (event) => {
+                bgm.volume = event.target.value;
+            });
+        }
+
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
         let audioEnabled = false;
 
         function initAudio() {
+            // เล่นเพลงประกอบเมื่อคลิก
+            if (bgm && bgm.paused) {
+                bgm.play().catch(e => console.log("รอผู้ใช้โต้ตอบ..."));
+            }
+
+            // เปิดใช้งานระบบเสียง UI
             if (!audioCtx) audioCtx = new AudioContext();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             if (!audioEnabled) {
@@ -452,19 +238,17 @@
 
             if (type === 'hover') {
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(1046.50, now); // C6
+                osc.frequency.setValueAtTime(1046.50, now);
                 gainNode.gain.setValueAtTime(0.05, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
             } else if (type === 'click') {
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(880, now); // A5
-                osc.frequency.exponentialRampToValueAtTime(440, now + 0.15); // Drop to A4
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
                 gainNode.gain.setValueAtTime(0.15, now);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
+                osc.start(now); osc.stop(now + 0.2);
             }
         }
 
@@ -474,7 +258,7 @@
             el.addEventListener('mousedown', () => playDing('click'));
         });
 
-        /* Form Logic & API Calls */
+        // 3. Form Logic & Download API
         function handleFormatChange() {
             const format = document.getElementById('formatSelect').value;
             const resSelect = document.getElementById('resSelect');
@@ -520,6 +304,7 @@
             loadingText.style.color = "#030a14";
 
             try {
+                // เรียกผ่าน Relative Path อย่างปลอดภัย
                 const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
                 const response = await fetch(apiUrl);
                 const data = await response.json();
@@ -557,115 +342,6 @@
                 }, 400);
             }
         }
-        // ==========================================
-        // 1. ระบบจัดการเสียงเพลง (Background Music)
-        // ==========================================
-        const bgm = document.getElementById('bgm-audio');
-        
-        // ฟังก์ชันบังคับเล่นเพลงเมื่อผู้ใช้โต้ตอบกับหน้าเว็บครั้งแรก
-        function startMusic() {
-            if (bgm && bgm.paused) {
-                // ตั้งระดับเสียงเริ่มต้น (เช่น 0.3 คือ 30%)
-                bgm.volume = 0.3;
-                bgm.play().catch(e => console.log("รอการคลิกจากผู้ใช้เพื่อเล่นเพลง..."));
-            }
-        }
-
-        // ดักจับการคลิกทุกที่บนหน้าจอ เพื่อปลดล็อกเสียง
-        document.body.addEventListener('click', startMusic, { once: true });
-
-
-        // ==========================================
-        // 2. ฟังก์ชันจัดการการดาวน์โหลด (ดาวน์โหลดตรงลงเครื่อง)
-        // ==========================================
-        async function startDownload() {
-            // ปลดล็อกเพลงเผื่อผู้ใช้เพิ่งคลิกครั้งแรกที่ปุ่มนี้
-            startMusic(); 
-
-            const urlInput = document.getElementById('url-input').value.trim();
-            const formatSelect = document.getElementById('format-select').value;
-            const resSelect = document.getElementById('res-select').value;
-            const downloadUI = document.getElementById('download-ui');
-            const loadingText = document.getElementById('loading-text');
-
-            if (!urlInput) {
-                showError("SYSTEM ERROR: PLEASE PROVIDE TARGET URL");
-                return;
-            }
-
-            // แสดงหน้าต่างโหลดข้อมูล
-            downloadUI.classList.remove('hidden');
-            setTimeout(() => { downloadUI.style.width = '100vw'; }, 10);
-            loadingText.innerText = "EXTRACTING DATA...";
-
-            try {
-                // [แก้ปัญหา Failed to Fetch]
-                // หากคุณรันบนเครื่องตัวเอง (Local) ให้ใช้ http://127.0.0.1:8000/api/download
-                // หากคุณอัปขึ้น Render แล้ว ให้เปลี่ยนเป็น /api/download เฉยๆ
-                const apiUrl = `/api/download?url=${encodeURIComponent(urlInput)}&format=${formatSelect}&resolution=${resSelect}`;
-                
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                if (response.ok && data.download_url) {
-                    loadingText.innerText = "DOWNLOADING TO DEVICE...";
-
-                    // [แก้ปัญหาโหลดลงเครื่องโดยตรงด้วย Blob]
-                    try {
-                        const fileResponse = await fetch(data.download_url);
-                        const blob = await fileResponse.blob();
-                        const blobUrl = window.URL.createObjectURL(blob);
-
-                        // สร้างปุ่มจำลองเพื่อสั่งเซฟไฟล์
-                        const a = document.createElement('a');
-                        a.href = blobUrl;
-                        a.download = data.title + (formatSelect === 'mp3' ? '.mp3' : '.mp4');
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(blobUrl); // คืนพื้นที่หน่วยความจำ
-                    } catch (blobError) {
-                        // แผนสำรอง: หากติดปัญหาความปลอดภัย (CORS) ของเซิร์ฟเวอร์วิดีโอ ให้เปิดลิงก์ตรง
-                        console.warn("ไม่สามารถดึง Blob ได้ กำลังใช้แผนสำรอง...", blobError);
-                        window.open(data.download_url, '_blank');
-                    }
-
-                    loadingText.innerText = "DOWNLOAD COMPLETE";
-                    setTimeout(() => {
-                        downloadUI.style.width = '0vw';
-                        setTimeout(() => { downloadUI.classList.add('hidden'); }, 300);
-                    }, 2000);
-
-                } else {
-                    throw new Error(data.detail || "ไม่สามารถดึงข้อมูลได้");
-                }
-
-            } catch (error) {
-                downloadUI.style.width = '0vw';
-                setTimeout(() => {
-                    downloadUI.classList.add('hidden');
-                    // แสดง Error ในกล่องเพื่อให้เรารู้ว่าผิดที่ไหน
-                    showError("ERROR: FAILED TO FETCH. CHECK YOUR BACKEND SERVER.");
-                    console.error(error);
-                }, 300);
-            }
-        }
     </script>
-    <!-- ระบบเสียงพื้นหลัง (Background Music) -->
-    <audio id="bgm-audio" loop>
-        <source src="Color Your Night.mp3" type="audio/mpeg">
-    </audio>
-
-    <!-- แผงควบคุมระดับเสียง สไตล์ P3R -->
-    <div class="fixed bottom-4 right-4 z-50 skew-card bg-[#010a14] border-l-4 border-cyan-400 p-3 solid-shadow opacity-80 hover:opacity-100 transition-opacity duration-200">
-        <div class="unskew flex items-center space-x-3">
-            <span class="text-cyan-400 text-xs font-mono font-bold tracking-widest uppercase">
-                ♪ COLOR YOUR NIGHT
-            </span>
-            <!-- แถบเลื่อนปรับเสียง (0 ถึง 1) -->
-            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.3" 
-                   class="w-24 cursor-pointer accent-cyan-400">
-        </div>
-    </div>
 </body>
 </html>
