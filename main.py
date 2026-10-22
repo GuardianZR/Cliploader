@@ -1,18 +1,10 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from urllib.parse import urlparse
 import yt_dlp
 import requests
 import os
 
-BLOCKED_DOMAINS = {"youtube.com", "www.youtube.com", "m.youtube.com", "youtu.be"}
-
-def check_url(url: str):
-    host = urlparse(url).netloc.lower()
-    if host in BLOCKED_DOMAINS:
-        return False, "ขออภัย ไม่รองรับการดาวน์โหลดจาก YouTube เนื่องจากข้อกำหนดของแพลตฟอร์ม"
-    return True, None
 app = FastAPI()
 
 app.add_middleware(
@@ -30,7 +22,7 @@ async def serve_frontend():
     html_path = os.path.join(BASE_DIR, "p3r_strict_ui_downloader.html")
     if os.path.exists(html_path):
         return FileResponse(html_path)
-    return {"error": "p3r_strict_ui_downloader.html"}
+    return {"error": "p3r_strict_ui_downloader.html not found"}
 
 @app.get("/bgm.mp3")
 async def serve_bgm():
@@ -47,10 +39,9 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
         title = "p3r_downloaded_media"
 
         # ==========================================
-        # 1. ระบบ 100% Reliable API Pool สำหรับ YouTube
+        # 1. ระบบจัดการ YouTube แบบปลอดภัย 100% (ไม่ใช้คุกกี้)
         # ==========================================
         if is_youtube:
-            # รายชื่อเซิร์ฟเวอร์ API สำรอง (ถ้าตัวแรกโดนบล็อก จะสลับไปตัวถัดไปทันที)
             cobalt_apis = [
                 "https://api.cobalt.tools/api/json",
                 "https://co.wuk.sh/api/json",
@@ -64,14 +55,12 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
             
-            # โครงสร้างข้อมูลที่อัปเดตใหม่ให้ตรงกับมาตรฐาน Cobalt V7/V8
             payload = {
                 "url": url,
                 "videoQuality": resolution if format != "mp3" else "max",
                 "isAudioOnly": True if format == "mp3" else False
             }
             
-            # วนลูปทดลองดึงข้อมูลจาก API ทีละตัว
             for api_url in cobalt_apis:
                 try:
                     response = requests.post(api_url, json=payload, headers=headers, timeout=10)
@@ -79,41 +68,33 @@ async def get_download_link(url: str, format: str = "mp4", resolution: str = "10
                         data = response.json()
                         direct_url = data.get("url") or data.get("picker", [{}])[0].get("url")
                         if direct_url:
-                            print(f"ดึงข้อมูลสำเร็จผ่าน: {api_url}")
-                            break # หากสำเร็จ ให้ออกจากลูปทันที
-                except Exception as e:
-                    print(f"ข้าม API {api_url} เนื่องจาก: {e}")
-                    continue # หากล่ม ให้ไปลองเซิร์ฟเวอร์ตัวถัดไป
+                            return {"status": "success", "title": "youtube_media", "download_url": direct_url}
+                except Exception:
+                    continue
             
-            if direct_url:
-                return {"status": "success", "title": "youtube_media", "download_url": direct_url}
-            # หาก API ทั้ง 4 ตัวล่มทั้งหมด (ซึ่งยากมาก) โค้ดจะไหลลงไปใช้ yt-dlp ด้านล่างเป็นแผนสุดท้าย
+            # หาก API ทั้ง 4 ตัวไม่สามารถใช้งานได้ จะส่ง Error กลับไปทันทีโดยไม่ใช้ yt-dlp
+            raise Exception("API สำหรับ YouTube ขัดข้องทั้งหมด กรุณาลองใหม่ภายหลัง")
 
         # ==========================================
-        # 2. ระบบ yt-dlp ดั้งเดิม (สำหรับ Facebook และเป็นไม้ตายสุดท้าย)
+        # 2. ระบบ yt-dlp ดั้งเดิม (สำหรับ Facebook และอื่นๆ โดยไม่พึ่งคุกกี้)
         # ==========================================
         if format.lower() == "mp3":
             format_query = 'bestaudio/best'
         else:
             format_query = 'best'
 
+        # ลบการเรียกหาและผูกไฟล์ cookies.txt ออกทั้งหมด
         ydl_opts = {
             'format': format_query,
             'quiet': True,
             'noplaylist': True,
-            'extractor_args': {'youtube': ['player_client=android,ios']},
             'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             }
         }
 
-        cookie_path = os.path.join(BASE_DIR, "cookies.txt")
-        if os.path.exists(cookie_path):
-            ydl_opts['cookiefile'] = cookie_path
-
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            
             direct_url = info.get('url')
             
             if not direct_url and 'formats' in info:
